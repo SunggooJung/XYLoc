@@ -1,0 +1,113 @@
+// essential header for ROS-OpenCV operation
+#include <ros/ros.h>
+
+// for using standard messages, float 32 type
+// communicate to image processing algorithm result
+#include <std_msgs/Float32MultiArray.h>
+
+// for using serial communication
+#include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <arpa/inet.h>
+
+
+// setup the initial name
+using namespace ros;
+using namespace std;
+
+int 	OpenSerial(char *device_name);
+int FdPort1; 
+
+// node main loop, for ROS
+int main(int argc, char** argv)
+{
+	// node name initialization
+    init(argc, argv, "ultrasound");
+
+	// assign node handler
+	ros::NodeHandle nh_;
+
+	//Publish
+	Publisher  P_ULTRASOUND	= nh_.advertise<std_msgs::Float32MultiArray>("/ULTRASOUND", 100);			
+
+	// setup the loop speed, [Hz], synchronizing the hector slam loop
+    ros::Rate loop_rate(20);
+
+	float fdt = (float)(1/20);
+	FdPort1 = OpenSerial(PORT1);
+    // Socket Creation
+
+
+	// node loop, for ROS, check ros status, ros::ok()
+
+	while( ok() )
+	{
+    
+
+
+
+
+
+
+    	// messages
+    	std_msgs::Float32MultiArray ultrasound_msg;
+    	ultrasound_msg.data.clear();
+    	ultrasound_msg.data.resize(4);
+    	ultrasound_msg.data[0] = 0
+    	ultrasound_msg.data[1] = 0;
+    	ultrasound_msg.data[2] = 0;
+    	ultrasound_msg.data[3] = 0;
+    	P_ULTRASOUND.publish(ultrasound_msg);
+
+
+		// loop rate [Hz]
+        loop_rate.sleep();
+
+
+		// loop sampling, ros
+		spinOnce();
+	}
+
+
+	return 0;
+}
+
+
+int OpenSerial(char *device_name)
+{
+	int fd;
+	struct termios newtio;
+
+	fd = open(device_name, O_RDWR | O_NOCTTY);
+
+	if(fd < 0)
+	{
+		printf("Serial Port Open Fail.\n");
+		return -1;
+	}
+
+	memset(&newtio, 0, sizeof(newtio));
+	newtio.c_iflag = IGNPAR;
+	newtio.c_oflag = 0;
+	newtio.c_cflag = CS8|CLOCAL|CREAD;
+
+	switch(BAUDRATE)
+	{
+		case 921600 : newtio.c_cflag |= B921600;
+		break;
+		case 115200 : newtio.c_cflag |= B115200;
+		break;
+		case 57600  : newtio.c_cflag |= B57600;
+		break;
+	}
+
+	newtio.c_lflag 		= 0;
+	newtio.c_cc[VTIME] 	= 0;
+	newtio.c_cc[VMIN] 	= sizeof(StrRXttyO)/2;
+
+	tcflush(fd,TCIFLUSH);
+	tcsetattr(fd,TCSANOW, &newtio);
+
+	return fd;
+}
